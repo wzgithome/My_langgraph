@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 
 @tool('calculate',parse_docstring=True)
-def calculate(a:float,b:float,operation:str)->float:
+def calculate4(a:float,b:float,operation:str)->float:
     # """
     #     计算两个数字的运算结果
     #

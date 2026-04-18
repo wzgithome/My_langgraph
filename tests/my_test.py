@@ -10,7 +10,7 @@ for chunk in client.runs.stream(
         None,
         "agent",
         input={
-            "messages":[{"role":"user","content":"今天北京的天气怎么样"}]
+            "messages":[{"role":"user","content":"用户的年龄是多少？"}]
         },
         stream_mode="messages-tuple"
         # stream_mode="messages"

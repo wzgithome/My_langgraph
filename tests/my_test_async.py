@@ -12,7 +12,7 @@ async def main():
         input={
             "messages":[{"role":"user","content":"今天北京的天气怎么样"}]
         },
-
+        config={"configurable":{"user_name":"小王"}}
     ):
         print(f' event of type:{chunk.event}...')
         print(chunk.data)
