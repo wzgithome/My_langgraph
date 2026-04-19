@@ -10,9 +10,9 @@ async def main():
         None,
         "agent",
         input={
-            "messages":[{"role":"user","content":"今天北京的天气怎么样"}]
+            "messages":[{"role":"user","content":"给当前用户生成一个祝福词"}]
         },
-        config={"configurable":{"user_name":"小王"}}
+        config={"configurable":{"user_name":"托尼史塔可"}}
     ):
         print(f' event of type:{chunk.event}...')
         print(chunk.data)

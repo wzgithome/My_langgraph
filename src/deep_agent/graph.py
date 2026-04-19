@@ -1,5 +1,6 @@
 from typing import List
 
+from deep_agent.my_state import CustomState
 from langchain.agents import create_agent, AgentState
 from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import AnyMessage, SystemMessage
@@ -12,10 +13,11 @@ from langgraph.graph import MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.runtime import Runtime
 
-from tools.tools_demo08 import get_user_info_by_name
+from tools.tools_demo8 import get_user_info
 from tools.tools_demo3 import calculate
 from tools.tools_demo6 import runnable_tool
 from tools.tools_demo7 import MySearchTool
+from tools.tools_demo9 import *
 from langchain_community.tools import TavilySearchResults
 
 # ================== 1. 环境配置 ==================
@@ -31,8 +33,7 @@ os.environ["TAVILY_API_KEY"] = os.getenv("TAVILY_API_KEY", "")
 model = ChatOpenAI(model='MiniMax-M2.5', temperature=0.6)
 # 获取前三条网页记录
 search = TavilySearchResults(max_results=3)
-tools = [calculate, runnable_tool, search]   # 如需其他工具，加入列表
-
+tools = [calculate, runnable_tool, search]  # 如需其他工具，加入列表
 
 
 # ================== 3. 动态提示词生成函数 ==================
@@ -53,6 +54,7 @@ class DynamicSystemPromptMiddleware(AgentMiddleware):
             after_model
             after_agent
     '''
+
     # ✅ 关键修改：在参数中显式声明 config
     def before_agent(self, state, config: RunnableConfig) -> dict | None:
         # 现在可以安全地从 config 参数中获取配置了
@@ -67,13 +69,15 @@ class DynamicSystemPromptMiddleware(AgentMiddleware):
         return {"messages": [dynamic_prompt] + state["messages"]}
 
 
-
 # create_agent 不支持动态 prompt 函数
-agent=create_agent(
+agent = create_agent(
     model=model,
-    tools=[calculate,runnable_tool,search,get_user_info_by_name],
+    tools=[calculate, runnable_tool,
+           search, get_user_info,
+           get_user_info_by_name,greet_user],
     # system_prompt='你是一个智能助手',
-    middleware=[DynamicSystemPromptMiddleware()]
+    middleware=[DynamicSystemPromptMiddleware()],
+    state_schema=CustomState
 )
 
 # 调用同步方法
