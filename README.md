@@ -114,3 +114,12 @@ class AgentState(TypedDict, Generic[ResponseT]):
 | `messages`            | 对话历史   | 追加             | ✅ 是         | ✅ 是               | 存储所有消息         |
 | `jump_to`             | 流程控制   | 每次覆盖（默认） | ❌ 否（临时） | ✅ 是               | 决定下一步跳转的节点 |
 | `structured_response` | 结构化输出 | 每次覆盖         | ✅ 是         | ❌ 否（仅内部设置） | 返回解析后的结果对象 |
+
+### WorkFlow（工作流）
+
+总结：Agent是一种特殊的节点（Node），而工作流是整个图的运行流程（Graph）。Agent负责“思考+行动”，工作流负责“编排+调度”
+
+LangGraph 本身就是一个**专门用来构建 AI Agent 工作流**的框架——你把模型的“思考”、“调用工具”、“回复用户”等步骤串起来，形成一个自动化的智能体工作流。
+
+
+

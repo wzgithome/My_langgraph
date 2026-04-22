@@ -24,6 +24,7 @@ class ToolArgs(BaseModel):
     topic:str=Field(...,description='主题')
     language:str=Field(...,description='语言')
 
+# 把chain生成工具
 runnable_tool=chain.as_tool(
     name='generate_news_title',
     description='这个一个专门生成报幕词的工具',
