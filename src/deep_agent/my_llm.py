@@ -10,7 +10,7 @@ os.environ["OPENAI_BASE_URL"] = os.getenv("OPENAI_BASE_URL2")
 
 # ================== 2. 初始化模型和工具 ==================
 model = ChatOpenAI(
-    model='qwen3.6-plus',
+    model='qwen3.6-flash',
     temperature=0.6,
     # 开启深度思考
     extra_body={"stream": True}
