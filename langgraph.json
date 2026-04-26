@@ -2,7 +2,7 @@
   "$schema": "https://langgra.ph/schema.json",
   "dependencies": ["."],
   "graphs": {
-    "agent": "deep_agent.my_workflow_new:graph"
+    "agent": "deep_agent.my_workflow_mcp_ToolNode:agent"
   },
   "env": ".env",
   "image_distro": "wolfi"

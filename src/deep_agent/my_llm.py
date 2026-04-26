@@ -13,7 +13,9 @@ model = ChatOpenAI(
     model='qwen3.6-flash',
     temperature=0.6,
     # 开启深度思考
-    extra_body={"stream": True}
+    # extra_body={"stream": True},
+    # 启用联网搜索功能
+    # extra_body={"enable_search": True},
 )
 
 

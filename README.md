@@ -181,15 +181,82 @@ end节点：是一个特殊节点，代表一个终止的节点。
 | 显式编译 `graph = builder.compile()`            | 装饰器自动包装，返回可调用对象                      |
 | 调用 `graph.invoke(input)`                      | 直接调用 `entrypoint.invoke(input)`                 |
 
-* MCP结合工作流
+| 场景             | 推荐使用       |
+| ---------------- | -------------- |
+| 简单线性工作流   | Functional API |
+| 需要复杂条件分支 | 传统 API       |
+| 需要精细控制状态 | 传统 API       |
+| 快速原型开发     | Functional API |
 
-  方法1 MCP->智能体中->工作流中的一个节点
 
-  方法2 自定义工具调用
 
-  
+1. MCP结合工作流
 
-  
+方法1 MCP->智能体中->工作流中的一个节点
+
+方法2 自定义工具调用
+
+| 功能          | BasicToolNode(自定义)          | ToolNode(官方)                           |
+| ------------- | ------------------------------ | ---------------------------------------- |
+| 工具调用逻辑  | 需手动解析tool_calls并执行工具 | 自动解析tool_calls,支持同步/异步工具调用 |
+| 状态管理      | 需要手动封装ToolMessage        | 自动将结果封装为Tool Message并更新状态   |
+| 错误处理      | 需手动捕获异常                 | 内置工具名称校验和异常处理机制           |
+| Langgraph集成 | 需手动配置节点和边             | 深度集成StateGraph，支持tools_condition  |
+| 性能优化      | 依赖手动实现的并发逻辑         | 内置并发调度和资源管理                   |
+
+#### 人机协作
+
+1. 使用interrupt暂停（中断）
+
+   * 指定一个检查点器，用于在每一步之后保存图状态
+
+   * 在适当位置调用interrupt()，第二种：转入interrupt_before[节点名称]
+
+   * 使用线程ID运行图，直到触发interrupt
+
+   * 使用invoke/ainvoke/stream/astream
+
+     a. 恢复执行：interrupt_before--->agent.astream(None,config,stream_mode='values')
+
+     b. 恢复执行：interrupt()--->agent.astream(Command(resume={"answer":user_input}),config, stream_mode='values')
+
+2. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
