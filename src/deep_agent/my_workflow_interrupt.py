@@ -4,17 +4,19 @@ from typing import Dict, Any, List
 
 from langchain_core.messages import ToolMessage, AIMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.constants import END, START
 from langgraph.graph import StateGraph, MessagesState
 # 新版本
 from langchain_tavily import TavilySearch
 from langgraph.prebuilt import ToolNode, tools_condition
+from xarray.core.utils import alias_message
 
 from deep_agent.env_utils import ZHIPU_API_KEY
 from deep_agent.my_llm import model
 
 """
-    人工干预
+    人工干预中断，使用interrupt_before方法
 """
 
 # 智谱MCP服务端的连接
@@ -28,19 +30,19 @@ bing_mcp_server_config = {
     'transport': 'sse'
 }
 my12306_mcp_server_config = {
-    "url": "https://mcp.api-inference.modelscope.net/7de29b75b86e40/sse",
+    "url": "https://mcp.api-inference.modelscope.net/12f0774efe824f/sse",
     'transport': 'sse'
 }
 
 chart_mcp_server_config = {
-    "url": "https://mcp.api-inference.modelscope.net/a22a82a319c649/sse",
+    "url": "https://mcp.api-inference.modelscope.net/80585a32fd6349/sse",
     'transport': 'sse'
 }
 
 mcp_client = MultiServerMCPClient({
     'chart_mcp': chart_mcp_server_config,
     'my12306_mcp': my12306_mcp_server_config,
-    # 'zhipu_mcp':zhipu_mcp_server_config
+    'zhipu_mcp':zhipu_mcp_server_config,
     # 'bing_mcp': bing_mcp_server_config
 })
 
@@ -72,7 +74,8 @@ async def create_graph():
     build.add_edge("tools", "chatbot")
     build.add_edge(START, "chatbot")
     # interrupt_before在工具执行之前中断
-    graph = build.compile(interrupt_before=['tools'])
+    memory=MemorySaver()
+    graph = build.compile(checkpointer=memory,interrupt_before=['tools'])
     return graph
 
 
@@ -86,17 +89,84 @@ async def run_graph():
             "thread_id":"zs1122"
         }
     }
+
+    # 人工介入给予的回答
+    def get_answer(tool_message,user_answer):
+        """让人工介入，并且给一个问题的答案"""
+        tool_name=tool_message.tool_calls[0]['name']
+
+        answer=(
+            f"人工强制终止了工具：{tool_name}的执行，拒绝的理由是：{user_answer}"
+        )
+
+        new_message=[
+            ToolMessage(content=answer,tool_call_id=tool_message.tool_calls[0]['id']),
+            AIMessage(content=answer)
+        ]
+        graph.update_state(
+            config=config,
+            values={'messages':new_message}
+        )
+
+
+    def print_message(event,result):
+        """格式化输出消息"""
+        messages=event.get('messages')
+        if messages:
+            if isinstance(messages,list):
+                message=messages[-1]  # 如果消息是列表，则取最后一个
+            if message.__class__.__name__=='AIMessage':
+                if message.content:
+                    result=message.content
+            msg_repr=message.pretty_repr(html=True)
+            if len(msg_repr)>1500:
+                msg_repr=msg_repr[:1500]+"...(已截断)"
+            print(msg_repr)   # 输出消息的表示形式
+
+        return result
+
     async def execute_graph(user_input:str)->str:
         """执行工作流的函数"""
-        pass
+        result='' # AI助手的最后一条消息
+        if user_input.strip().lower()!='y': #正常的用户提问
+            current_state=graph.get_state(config)
+            if current_state.next:  # 如果有下一步，则当前工作流处在中段中
+                # 状态中存储的最后一条message
+                tools_script_message=current_state.values['messages'][-1]
+                get_answer(tools_script_message,user_input)
+                message=graph.get_state(config).values['messages'][-1]
+                result=message.content
+                return result
+            else:
+                async for chunk in graph.astream(
+                        {'messages':('user',user_input)},config,stream_mode='values'):
+                    result=print_message(chunk,result)
+
+        # 工具中断了，用户输入了y
+        else: # 用户输入了Y想继续工具的调用
+            async for chunk in graph.astream(None,config,stream_mode='values'):
+                result=print_message(chunk,result)
+
+        current_state=graph.get_state(config)
+        if current_state.next:
+            ai_message=current_state.values['messages'][-1]
+            tool_name=ai_message.tool_calls[0]['name']
+
+            result=(f'AI助手马上根据你要求，执行{tool_name}工具。您是否批准继续执行？输入y继续；'
+                    f'否则，请说明您的理由。\n')
+
+        return result
+
 
 
     while True:
         user_input=input('用户：')
         res=await execute_graph(user_input)
+        print('AI:',res)
 
 
-
+if __name__ == '__main__':
+    asyncio.run(run_graph())
 
 
 
